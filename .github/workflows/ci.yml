@@ -13,39 +13,29 @@ permissions:
   contents: read
 
 jobs:
-  quality:
+  # A single job: the steps are sequential anyway, and each extra job waits for another runner.
+  pipeline:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.2.0
-        with:
-          enable-cache: true
-      - run: uv sync --locked
-      - run: make lint
-
-  test:
-    needs: quality
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.2.0
-        with:
-          enable-cache: true
-      - run: uv sync --locked
-      - run: make test
-      - uses: actions/upload-artifact@v7
-        with:
-          name: coverage
-          path: coverage.xml
-
-  image:
-    needs: test
-    runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
       packages: write
     steps:
       - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+
+      - name: Lint and type check
+        run: make lint
+      - name: Unit and integration tests
+        run: make test
+      - uses: actions/upload-artifact@v7
+        with:
+          name: coverage
+          path: coverage.xml
+
       - uses: docker/setup-buildx-action@v4
       - uses: docker/metadata-action@v6
         id: meta
@@ -61,7 +51,8 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       # Pull requests only build the image; pushes to main also publish it.
-      - uses: docker/build-push-action@v7
+      - name: Build image
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: ${{ github.event_name == 'push' }}

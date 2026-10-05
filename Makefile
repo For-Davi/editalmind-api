@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help install run lint format test-unit test-integration test
+.PHONY: help install run lint format test-unit test-integration test verify
 
 help: ## List available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-17s %s\n", $$1, $$2}'
@@ -28,3 +28,6 @@ test-integration: ## Run integration tests
 
 test: ## Run every test with coverage
 	uv run pytest --cov --cov-report=term-missing --cov-report=xml
+
+verify: lint test ## Run the same steps as the CI pipeline, including the image build
+	docker build -t editalmind-api:verify .
