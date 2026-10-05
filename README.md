@@ -38,9 +38,10 @@ make lint               # ruff check + ruff format --check + mypy strict
 make test-unit
 make test-integration
 make test               # both, with coverage (fails under 80%)
+make verify             # same steps as CI: lint, tests and the Docker image build
 ```
 
-The CI pipeline runs lint, tests and the Docker build on every pull request, and publishes the image to `ghcr.io` on every push to `main`.
+The CI pipeline is a single job running lint, tests and the Docker build on every pull request; pushes to `main` also publish the image to `ghcr.io`.
 
 ## Docker
 
